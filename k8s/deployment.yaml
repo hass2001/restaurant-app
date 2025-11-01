@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant-app-deployment
+  namespace: restaurant-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: restaurant-app
+  template:
+    metadata:
+      labels:
+        app: restaurant-app
+    spec:
+      containers:
+        - name: restaurant-app
+          image: app-restaurant-app:latest
+          imagePullPolicy: Never  
+          ports:
+            - containerPort: 5000
+
