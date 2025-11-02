@@ -1,62 +1,61 @@
-name: CI/CD Pipeline - Restaurant App
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_NAME: app-restaurant-app
+
     steps:
-      #  Étape 1 : Cloner le dépôt
+      # Étape 1 : Checkout du code
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      #  Étape 2 : Configurer Python (pour tests ou dépendances si besoin)
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      # Étape 3 : Installation des dépendances (facultatif si tests)
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      # Étape 4 : Se connecter à Docker Hub
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      # Étape 2 : Configurer Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      #  Étape 5 : Construire et pousser l’image Docker
-      - name: Build and Push Docker image
+      # Étape 3 : Build de l'image Docker
+      - name: Build Docker image
         run: |
-          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/restaurant-app:latest
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          docker build -t $IMAGE_NAME:latest .
 
-      #  Étape 6 : Configurer le kubeconfig (si tu veux déployer)
-      - name: Configure Kubeconfig
-        if: secrets.KUBE_CONFIG_DATA != ''
+      # Étape 4 : Tag et push de l'image sur Docker Hub
+      - name: Push Docker image
         run: |
+          docker tag $IMAGE_NAME:latest ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
+
+      # Étape 5 : Configurer le kubeconfig si disponible
+      - name: Configure Kubeconfig
+        if: ${{ secrets.KUBE_CONFIG_DATA != '' }}
+        run: |
+          mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
 
-      # Étape 7 : Déploiement sur Kubernetes
+      # Étape 6 : Déploiement sur Kubernetes
       - name: Deploy to Kubernetes
-        if: secrets.KUBE_CONFIG_DATA != ''
+        if: ${{ secrets.KUBE_CONFIG_DATA != '' }}
         run: |
           kubectl apply -f k8s/namespace.yaml || true
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
 
-      # Étape 8 : Vérifier le statut du déploiement
+      # Étape 7 : Vérifier le statut du déploiement
       - name: Verify Deployment
-        if: secrets.KUBE_CONFIG_DATA != ''
+        if: ${{ secrets.KUBE_CONFIG_DATA != '' }}
         run: |
           kubectl get pods -n restaurant-app
           kubectl get svc -n restaurant-app
