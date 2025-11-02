@@ -35,7 +35,7 @@ jobs:
       # Étape 4 : Lint Python code (ciblé sur ton code uniquement)
       - name: Lint with flake8
         run: |
-          flake8 app.py --max-line-length=120
+          flake8 --max-line-length=120 --exclude=.github,__pycache__ .
 
       # Étape 5 : Run tests with pytest
       - name: Run tests
