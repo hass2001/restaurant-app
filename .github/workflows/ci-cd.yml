@@ -14,6 +14,7 @@ jobs:
 
     env:
       IMAGE_NAME: app-restaurant-app
+      KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
 
     steps:
       # Étape 1 : Checkout du code
@@ -40,14 +41,14 @@ jobs:
 
       # Étape 5 : Configurer le kubeconfig si disponible
       - name: Configure Kubeconfig
-        if: ${{ secrets.KUBE_CONFIG_DATA != '' }}
+        if: ${{ env.KUBE_CONFIG_DATA }}
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          echo "${KUBE_CONFIG_DATA}" | base64 --decode > $HOME/.kube/config
 
       # Étape 6 : Déploiement sur Kubernetes
       - name: Deploy to Kubernetes
-        if: ${{ secrets.KUBE_CONFIG_DATA != '' }}
+        if: ${{ env.KUBE_CONFIG_DATA }}
         run: |
           kubectl apply -f k8s/namespace.yaml || true
           kubectl apply -f k8s/deployment.yaml
@@ -55,7 +56,7 @@ jobs:
 
       # Étape 7 : Vérifier le statut du déploiement
       - name: Verify Deployment
-        if: ${{ secrets.KUBE_CONFIG_DATA != '' }}
+        if: ${{ env.KUBE_CONFIG_DATA }}
         run: |
           kubectl get pods -n restaurant-app
           kubectl get svc -n restaurant-app
