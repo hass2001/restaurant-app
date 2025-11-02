@@ -4,37 +4,15 @@ Description
 
 Ce projet montre le déploiement d’une application simple restaurant-app utilisant Docker, Kubernetes, un pipeline CI/CD avec GitHub Actions, et la mise en place d’un monitoring avec Prometheus et Grafana.
 
-En bonus, une infrastructure AWS minimale a été créée via Terraform à partir de cloudSHELL : une VM EC2 et un bucket S3 pour le stockage
+(En bonus, une infrastructure AWS minimale a été créée via Terraform à partir de cloudSHELL : une VM EC2 et un bucket S3 pour le stockage)
 
 
 
  Architecture du projet
-┌───────────────────────────────┐
-│          GitHub Repo           │
-│   ┌───────────────────────┐   │
-│   │ Dockerfile + app code │   │
-│   └───────────────────────┘   │
-│           CI/CD pipeline       │
-│     (GitHub Actions: build + lint) │
-└──────────────┬────────────────┘
-               │
-               ▼
-         ┌─────────────┐
-         │ Docker Image│
-         └─────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │ Kubernetes    │
-       │ Deployment    │
-       └─────┬─────────┘
-             │
-             ▼
- ┌─────────────────────┐
- │ Prometheus & Grafana│
- │ (Monitoring)        │
- └─────────────────────┘
-     
+
+ <img width="361" height="612" alt="image" src="https://github.com/user-attachments/assets/9eddcaf0-4fc0-4605-9723-48f5ba168615" />
+
+
 
 Containerisation
 
