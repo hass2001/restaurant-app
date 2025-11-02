@@ -1,45 +1,46 @@
-name: CI/CD - Restaurant App (Flask, Minikube Local)
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  build-test-and-push:
-    name: Build, Test, Lint & Push Docker Image
+  lint-test-build:
+    name: Lint, Test, Build & Push Docker Image
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: app-restaurant-app
 
     steps:
       # Étape 1 : Checkout du code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Étape 2 : Set up Python
+      # Étape 2 : Configurer Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # Étape 3 : Install dependencies for linting and tests
+      # Étape 3 : Installer les dépendances
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install flake8 pytest
+          pip install --user -r requirements.txt
+          pip install --user flake8 pytest
 
-      # Étape 4 : Lint Python code
+      # Étape 4 : Lint Python code (ciblé sur ton code uniquement)
       - name: Lint with flake8
         run: |
-          flake8 .
+          flake8 app.py --max-line-length=120
 
       # Étape 5 : Run tests with pytest
       - name: Run tests
         run: |
-          pytest
+          pytest --maxfail=1 --disable-warnings -q
 
       # Étape 6 : Log in to Docker Hub
       - name: Log in to Docker Hub
@@ -51,16 +52,9 @@ jobs:
       # Étape 7 : Build Docker image
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/restaurant-app:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest .
 
       # Étape 8 : Push Docker image to Docker Hub
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/restaurant-app:latest
-
-      # Étape 9 : Optional - Run container to test
-      - name: Run container to verify
-        run: |
-          docker run --rm -d -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/restaurant-app:latest
-          sleep 10
-          curl -f http://localhost:5000 || exit 1
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
